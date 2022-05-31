@@ -9,14 +9,19 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
+    <style>
+        body {
+            background-color: beige;
+        }
+    </style>
+
     <title>Reversi</title>
 </head>
 
 <body>
-    <h1>This is Reversi!</h1>
-
     <div class="container-fluid">
-        <div class="row">
+
+        <div class="row m-3">
             <div class="col text-center">
                 <a href="about.html" class="btn btn-success text-nowrap">About</a>
             </div>
@@ -26,15 +31,28 @@
             </div>
         </div>
 
-        <div class="row">
-            row 2
+        <div class="row m-3">
+            <div class="col text-center">
+                <img class="img-fluid" src="assets/images/top-splash.jpeg" alt="This is the Reversi logo number 1." />
+            </div>
         </div>
-        <div class="row">
-            row 3
+
+        <div class="row align-items-center justify-content-center m-3">
+            <div class="col-8">
+                <div class="input-group">
+                    <span class="input-group-text" id="display-name">Name</span>
+                    <input type="text" class="form-control text-nowrap" id="name-input" placeholder="Choose your display name" aria-label="Enter your display name for use while playing Reversi" aria-describedby="display-name" />
+                    <button type="submit" class="btn btn-primary text-nowrap" id="lobby-button" onclick="window.location='lobby.html'">Enter Lobby</button>
+                </div>
+            </div>
         </div>
-        <div class="row">
-            row 4
+
+        <div class="row m-3">
+            <div class="col text-center">
+                <img class="img-fluid" src="assets/images/bottom-splash.png" alt="This is a Reversi board." />
+            </div>
         </div>
+
     </div>
     <!-- Optional JavaScript; choose one of the two! -->
 
