@@ -1,0 +1,28 @@
+{
+  "name": "reversi-game",
+  "version": "1.0.0",
+  "description": "Web implementation of reversi game",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ethanbanez/reversi-game.git"
+  },
+  "keywords": [
+    "reversi",
+    "ethanbanez",
+    "othello"
+  ],
+  "author": "Ethan James Banez",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/ethanbanez/reversi-game/issues"
+  },
+  "homepage": "https://github.com/ethanbanez/reversi-game#readme",
+  "dependencies": {
+    "node-static": "^0.7.11",
+    "socket.io": "^4.5.1"
+  }
+}
