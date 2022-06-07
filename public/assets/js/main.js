@@ -9,17 +9,25 @@ function getIRIParameterValue(requestedKey) {
             return value;
         }
     }
+    return null;
 }
 
 let username = decodeURI(getIRIParameterValue("username"));
-if (typeof username == "undefined" || username === null) {
+if (
+    typeof username == "undefined" ||
+    username === null ||
+    username === "null"
+) {
     username = "Anonymous_" + Math.floor(Math.random() * 1000);
 }
 
 // $('#messages').prepend('<b>' + username + ':</b>');
 
-let chatRoom = "Lobby";
+let chatRoom = decodeURI(getIRIParameterValue("game_id"));
 
+if (typeof chatRoom == "undefined" || chatRoom === null || chatRoom === "null") {
+    chatRoom = "Lobby";
+}
 /** Set up the socket.io connection to the server */
 
 let socket = io();
@@ -27,27 +35,94 @@ socket.on("log", (array) => {
     console.log.apply(console, array);
 });
 
+function makeInviteButton() {
+    let newHTML = '<button type="button" class="btn btn-outline-primary">Invite</button>';
+    let newNode = $(newHTML);
+    return newNode;
+}
+
 socket.on("join_room_response", (response) => {
     if (typeof response == "undefined" || response === null) {
         console.log("server did not send a response");
         return;
     }
+
     if (response === "fail") {
         console.log(response.message);
         return;
     }
 
+
+    /** We don't want to be notified of ourselves */
+    if (response.socketId === socket.id) {
+        return;
+    }
+
+
+    let domElements = $('.socket_' + response.socketId);
+
+    if (domElements.length !== 0) {
+        return;
+    }
+
+    let nodeA = $('<div></div>');
+    nodeA.addClass("row");
+    nodeA.addClass("align-text-center");
+    nodeA.addClass("socket_" + response.socketId);
+    nodeA.hide();
+
+    let nodeB = $('<div></div>');
+    nodeB.addClass("col");
+    nodeB.addClass("text-end");
+    nodeB.addClass("socket_" + response.socketId);
+    nodeB.append("<h4>" + response.username + "</h4>");
+
+    let nodeC = $('<div></div>');
+    nodeC.addClass("col");
+    nodeC.addClass("text-end");
+    nodeC.addClass("socket_" + response.socketId);
+
+    let buttonC = makeInviteButton();
+    nodeC.append(buttonC);
+
+
+    nodeA.append(nodeB);
+    nodeA.append(nodeC);
+
+    $('#players').append(nodeA);
+    nodeA.fadeIn(500);
+
+
+    /** Announcing when someone arrives */
+    let newString = '<p class="join_room_response">' + response.username + " joined the " + response.room + ". (There are " + response.count + " users in this room)</p>";
+    let newNode = $(newString);
+    newNode.hide();
+    $("#messages").prepend(newString);
+    newNode.fadeIn(500);
+});
+
+socket.on("player_disconnected", (response) => {
+    if (typeof response == "undefined" || response === null) {
+        console.log("server did not send a response");
+        return;
+    }
+
+    if (response.socketId === socket.id) {
+        return;
+    }
+
+    let domElements = $('.socket_' + response.socketId);
+    if (domElements.length !== 0) {
+        domElements.hide(500);
+    }
+
     /** We know we got a good response */
 
-    let newString =
-        '<p class="join_room_response">' +
-        response.username +
-        " joined the " +
-        response.room +
-        ". (There are " +
-        response.count +
-        " users in this room)</p>";
-    $("#messages").prepend(newString);
+    let newString = '<p class="left_room_response">' + response.username + " left the " + response.room + ". (There are " + response.count + " users in this room)</p>";
+    let newNode = $(newString);
+    newNode.hide();
+    $("#messages").prepend(newNode);
+    newNode.fadeIn(1000);
 });
 
 function sendChatMessage() {
@@ -61,6 +136,7 @@ function sendChatMessage() {
         JSON.stringify(request)
     );
     socket.emit("send_chat_message", request);
+    $("#chat-message").val("");
 }
 
 socket.on("send_chat_message_response", (response) => {
@@ -75,13 +151,17 @@ socket.on("send_chat_message_response", (response) => {
 
     /** We know we got a good response */
 
-    let newString =
+    let newHTML =
         "<p class='chat_message'><b>" +
         response.username +
         "</b>: " +
         response.message +
         "</p>";
-    $("#messages").prepend(newString);
+
+    let newNode = $(newHTML);
+    newNode.hide();
+    $("#messages").prepend(newNode);
+    newNode.fadeIn(500);
 });
 
 /** Request to join the chatroom */
@@ -94,4 +174,14 @@ $(() => {
         JSON.stringify(request)
     );
     socket.emit("join_room", request);
+
+    $("#lobby-title").html(username + "'s Lobby");
+
+    $("#chat-message").keypress(function(e) {
+        let key = e.which;
+        if (key === 13) {
+            $("button[id = chat-button]").click();
+            return false;
+        }
+    });
 });

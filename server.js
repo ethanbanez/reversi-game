@@ -30,12 +30,15 @@ let app = http
 
 console.log("The server is running");
 
+
+/** Set up a registry of player info and socket IDs */
+let players = [];
 /*********************************/
 /** Set up the web socket server */
 
 const { Server } = require("socket.io");
-const { type } = require("os");
 const io = new Server(app);
+
 
 io.on("connection", (socket) => {
     /** Output a log message on the server and send it to the clients */
@@ -48,10 +51,6 @@ io.on("connection", (socket) => {
     }
 
     serverLog("a page connected to the server: " + socket.id);
-
-    socket.on("disconnect", () => {
-        serverLog("a page disconnected from the server: " + socket.id);
-    });
 
     /** join_room command handler */
     /**
@@ -68,6 +67,7 @@ io.on("connection", (socket) => {
      *          'room': the room that was joined,
      *          'username': the user that joined the room,
      *          'count': the number of users in the chat room
+     *          'socketId': the socket of the user that just joined the room
      *      }
      * or
      *
@@ -117,37 +117,58 @@ io.on("connection", (socket) => {
         socket.join(room);
 
         /** Make sure the client was put in the room */
-        io.in(room)
-            .fetchSockets()
-            .then((sockets) => {
-                serverLog(
-                    "there are " + sockets.length + " clients in the room: " + room
-                );
-                /** Sockets didn't join the room */
-                if (
-                    typeof sockets == "undefined" ||
-                    sockets === null ||
-                    !sockets.includes(socket)
-                ) {
-                    response = {};
-                    response.result = "fail";
-                    response.message = "server internal error joining the chat room";
-                    socket.emit("join_room_response", response);
-                    serverLog("join_room command failed", JSON.stringify(response));
-                    return;
-                } else {
-                    /** If the socket did join the room  */
-                    response = {};
-                    response.result = "success";
-                    response.room = room;
-                    response.username = username;
-                    response.count = sockets.length;
+        io.in(room).fetchSockets().then((sockets) => {
+            /** Sockets didn't join the room */
+            if (typeof sockets == "undefined" || sockets === null || !sockets.includes(socket)) {
+                response = {};
+                response.result = "fail";
+                response.message = "server internal error joining the chat room";
+                socket.emit("join_room_response", response);
+                serverLog("join_room command failed", JSON.stringify(response));
+                return;
+            } else {
+                players[socket.id] = {
+                    username: username,
+                    room: room,
+                }
 
+                /** If the socket did join the room  */
+                /** Announce to everyone in the room who else is in the room */
+
+                for (const member of sockets) {
+                    response = {
+                        result: "success",
+                        socketId: member.id,
+                        room: players[member.id].room,
+                        username: players[member.id].username,
+                        count: sockets.length,
+                    };
                     /** tell everyone that a new user has joined the chat room */
                     io.of("/").to(room).emit("join_room_response", response);
                     serverLog("join_room command succeeded", JSON.stringify(response));
                 }
-            });
+
+            }
+        });
+
+        socket.on("disconnect", () => {
+            serverLog("a page disconnected from the server: " + socket.id);
+
+            if (typeof players[socket.id] != "undefined" && players[socket.id] != null) {
+                let response = {
+                    username: players[socket.id].username,
+                    room: players[socket.id].room,
+                    count: Object.keys(players).length - 1,
+                    socketId: socket.id,
+                };
+                let room = players[socket.id].room;
+                delete players[socket.id];
+
+                /** Tell everyone who left the room */
+                io.of("/").to(room).emit("player_disconnected", response);
+                serverLog("player_disconnected succeeded", JSON.stringify(response));
+            }
+        });
     });
 
     /** send_chat_message command handler */
