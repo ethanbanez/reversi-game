@@ -303,6 +303,95 @@ socket.on("send_chat_message_response", (response) => {
     newNode.fadeIn(500);
 });
 
+
+
+let oldBoard = [
+    ["?", "?", "?", "?", "?", "?", "?", "?"],
+    ["?", "?", "?", "?", "?", "?", "?", "?"],
+    ["?", "?", "?", "?", "?", "?", "?", "?"],
+    ["?", "?", "?", "w", "b", "?", "?", "?"],
+    ["?", "?", "?", "b", "w", "?", "?", "?"],
+    ["?", "?", "?", "?", "?", "?", "?", "?"],
+    ["?", "?", "?", "?", "?", "?", "?", "?"],
+    ["?", "?", "?", "?", "?", "?", "?", "?"],
+];
+socket.on("game_update", (response) => {
+    if (typeof response == "undefined" || response === null) {
+        console.log("server did not send a response");
+        return;
+    }
+    if (response === "fail") {
+        console.log(response.message);
+        return;
+    }
+
+    let board = response.game.board;
+    if (typeof board == 'undefined' || board === null) {
+        console.log('Server did not send a valid board to display');
+        return;
+    }
+
+    /** Update client color */
+
+    /** animate changes to the board */
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            /** check to see if the server changed any space on the board */
+            if (oldBoard[row][col] !== board[row][col]) {
+                let graphic = "";
+                let altTag = "";
+                if (oldBoard[row][col] !== '?' && board[row][col] === " ") {
+                    /** need empty gif */
+                    graphic = "empty.gif";
+                    altTag = "empty space";
+                } else if (oldBoard[row][col] !== '?' && board[row][col] === "w") {
+                    /** need empty gif */
+                    graphic = "e-w.gif";
+                    altTag = "white token";
+                } else if (oldBoard[row][col] !== '?' && board[row][col] === "b") {
+                    /** need empty gif */
+                    graphic = "e-b.gif";
+                    altTag = "black token";
+                } else if (oldBoard[row][col] !== ' ' && board[row][col] === "w") {
+                    /** need empty gif */
+                    graphic = "e-w.gif";
+                    altTag = "white token";
+                } else if (oldBoard[row][col] !== ' ' && board[row][col] === "b") {
+                    /** need empty gif */
+                    graphic = "e-b.gif";
+                    altTag = "black token";
+                } else if (oldBoard[row][col] !== 'w' && board[row][col] === " ") {
+                    /** need empty gif */
+                    graphic = "w-e.gif";
+                    altTag = "empty space";
+                } else if (oldBoard[row][col] !== 'b' && board[row][col] === " ") {
+                    /** need empty gif */
+                    graphic = "b-e.gif";
+                    altTag = "empty space";
+                } else if (oldBoard[row][col] !== 'w' && board[row][col] === "b") {
+                    /** need empty gif */
+                    graphic = "w-b.gif";
+                    altTag = "black token";
+                } else if (oldBoard[row][col] !== 'b' && board[row][col] === "w") {
+                    /** need empty gif */
+                    graphic = "b-w.gif";
+                    altTag = "white token";
+                } else {
+                    /** need empty gif */
+                    graphic = "error.gif";
+                    altTag = "error";
+                }
+
+                const t = new Date.now();
+                $('#' + row + '_' + col).html('<img class="img-fluid" src="assets/images/' + graphic + '?time=' + t + '" alt="' + altTag + '"/>');
+            }
+        }
+    }
+
+    oldBoard = board;
+
+});
+
 /** Request to join the chatroom */
 $(() => {
     let request = {};

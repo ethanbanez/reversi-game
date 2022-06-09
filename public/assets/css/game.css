@@ -1,3 +1,15 @@
+table#game-board {
+    border: 4px solid black;
+    margin: 0px;
+    padding: 0px;
+}
+
+table#game-board td {
+    border: 1px solid black;
+    margin: 0px;
+    padding: 0px;
+}
+
 body {
     background-color: beige;
 }
@@ -15,18 +27,6 @@ body {
 
 
 /* these two css settings aren't working */
-
-table#game-board {
-    border: 4px solid black;
-    margin: 0px;
-    padding: 0px;
-}
-
-table#game-board td {
-    border: 1px solid black;
-    margin: 0px;
-    padding: 0px;
-}
 
 .chat_message {
     font-size: 125%;
