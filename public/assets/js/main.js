@@ -24,7 +24,7 @@ if (
 
 // $('#messages').prepend('<b>' + username + ':</b>');
 
-let chatRoom = decodeURI(getIRIParameterValue("game_id"));
+let chatRoom = decodeURI(getIRIParameterValue("gameId"));
 
 if (
     typeof chatRoom == "undefined" ||
@@ -168,7 +168,7 @@ socket.on("game_start_response", (response) => {
     $(".socket_" + response.socketId + " button").replaceWith(newNode);
 
     /** Jump to the game page */
-    window.location.href = 'game.html?username=' + username + '&game_id' + response.gameId;
+    window.location.href = 'game.html?username=' + username + '&gameId=' + response.gameId;
 });
 
 socket.on("join_room_response", (response) => {
@@ -309,8 +309,8 @@ let oldBoard = [
     ["?", "?", "?", "?", "?", "?", "?", "?"],
     ["?", "?", "?", "?", "?", "?", "?", "?"],
     ["?", "?", "?", "?", "?", "?", "?", "?"],
-    ["?", "?", "?", "w", "b", "?", "?", "?"],
-    ["?", "?", "?", "b", "w", "?", "?", "?"],
+    ["?", "?", "?", "?", "?", "?", "?", "?"],
+    ["?", "?", "?", "?", "?", "?", "?", "?"],
     ["?", "?", "?", "?", "?", "?", "?", "?"],
     ["?", "?", "?", "?", "?", "?", "?", "?"],
     ["?", "?", "?", "?", "?", "?", "?", "?"],
@@ -340,7 +340,7 @@ socket.on("game_update", (response) => {
             if (oldBoard[row][col] !== board[row][col]) {
                 let graphic = "";
                 let altTag = "";
-                if (oldBoard[row][col] !== '?' && board[row][col] === " ") {
+                if (oldBoard[row][col] !== '?' && board[row][col] === ' ') {
                     /** need empty gif */
                     graphic = "empty.gif";
                     altTag = "empty space";
@@ -382,7 +382,7 @@ socket.on("game_update", (response) => {
                     altTag = "error";
                 }
 
-                const t = new Date.now();
+                const t = Date.now();
                 $('#' + row + '_' + col).html('<img class="img-fluid" src="assets/images/' + graphic + '?time=' + t + '" alt="' + altTag + '"/>');
             }
         }

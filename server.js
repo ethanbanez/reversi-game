@@ -569,7 +569,7 @@ function send_game_update(socket, gameId, message) {
     let response = {
         result: 'success',
         gameId: gameId,
-        games: games[gameId],
+        game: games[gameId],
         message: message,
     }
 
