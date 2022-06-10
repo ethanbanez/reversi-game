@@ -30,7 +30,6 @@ let app = http
 
 console.log("The server is running");
 
-
 /** Set up a registry of player info and socket IDs */
 let players = [];
 /*********************************/
@@ -38,7 +37,6 @@ let players = [];
 
 const { Server } = require("socket.io");
 const io = new Server(app);
-
 
 io.on("connection", (socket) => {
     /** Output a log message on the server and send it to the clients */
@@ -117,44 +115,48 @@ io.on("connection", (socket) => {
         socket.join(room);
 
         /** Make sure the client was put in the room */
-        io.in(room).fetchSockets().then((sockets) => {
-            /** Sockets didn't join the room */
-            if (typeof sockets == "undefined" || sockets === null || !sockets.includes(socket)) {
-                response = {};
-                response.result = "fail";
-                response.message = "server internal error joining the chat room";
-                socket.emit("join_room_response", response);
-                serverLog("join_room command failed", JSON.stringify(response));
-                return;
-            } else {
-                players[socket.id] = {
-                    username: username,
-                    room: room,
-                }
-
-                /** If the socket did join the room  */
-                /** Announce to everyone in the room who else is in the room */
-
-                for (const member of sockets) {
-                    response = {
-                        result: "success",
-                        socketId: member.id,
-                        room: players[member.id].room,
-                        username: players[member.id].username,
-                        count: sockets.length,
+        io.in(room)
+            .fetchSockets()
+            .then((sockets) => {
+                /** Sockets didn't join the room */
+                if (
+                    typeof sockets == "undefined" ||
+                    sockets === null ||
+                    !sockets.includes(socket)
+                ) {
+                    response = {};
+                    response.result = "fail";
+                    response.message = "server internal error joining the chat room";
+                    socket.emit("join_room_response", response);
+                    serverLog("join_room command failed", JSON.stringify(response));
+                    return;
+                } else {
+                    players[socket.id] = {
+                        username: username,
+                        room: room,
                     };
-                    /** tell everyone that a new user has joined the chat room */
-                    io.of("/").to(room).emit("join_room_response", response);
-                    serverLog("join_room command succeeded", JSON.stringify(response));
-                    if (room !== "Lobby") {
-                        send_game_update(socket, room, 'initial update');
+
+                    /** If the socket did join the room  */
+                    /** Announce to everyone in the room who else is in the room */
+
+                    for (const member of sockets) {
+                        response = {
+                            result: "success",
+                            socketId: member.id,
+                            room: players[member.id].room,
+                            username: players[member.id].username,
+                            count: sockets.length,
+                        };
+                        /** tell everyone that a new user has joined the chat room */
+                        io.of("/").to(room).emit("join_room_response", response);
+                        serverLog("join_room command succeeded", JSON.stringify(response));
+                        if (room !== "Lobby") {
+                            send_game_update(socket, room, "initial update");
+                        }
                     }
                 }
-
-            }
-        });
+            });
     });
-
 
     socket.on("invite", (request) => {
         serverLog("server received a command", "'invite'", JSON.stringify(request));
@@ -164,7 +166,7 @@ io.on("connection", (socket) => {
             response = {
                 result: "fail",
                 message: "client did not send a request",
-            }
+            };
             socket.emit("invite_response", response);
             serverLog("invite command failed", JSON.stringify(response));
             return;
@@ -173,7 +175,11 @@ io.on("connection", (socket) => {
         let room = players[socket.id].room;
         let username = players[socket.id].username;
 
-        if (typeof requested_user == "undefined" || requested_user === null || requested_user === "") {
+        if (
+            typeof requested_user == "undefined" ||
+            requested_user === null ||
+            requested_user === ""
+        ) {
             response = {
                 result: "fail",
                 message: "client did not request a valid user",
@@ -193,7 +199,11 @@ io.on("connection", (socket) => {
             serverLog("invite command failed", JSON.stringify(response));
             return;
         }
-        if (typeof username == "undefined" || username === null || username === "") {
+        if (
+            typeof username == "undefined" ||
+            username === null ||
+            username === ""
+        ) {
             response = {
                 result: "fail",
                 message: "the user that was involved does not have a name registered",
@@ -204,36 +214,40 @@ io.on("connection", (socket) => {
         }
 
         /** Make sure that the invited player is present */
-        io.in(room).allSockets().then((sockets) => {
-            /** Sockets didn't join the room */
+        io.in(room)
+            .allSockets()
+            .then((sockets) => {
+                /** Sockets didn't join the room */
 
-            /** invitee isn't in the link */
-            if (typeof sockets == "undefined" || sockets === null || !sockets.has(requested_user)) {
-                response = {
-                    result: "fail",
-                    message: "user invited is no longer in the room",
-                };
-                socket.emit("invite_response", response);
-                serverLog("invite command failed", JSON.stringify(response));
-                return;
-            }
-            /** invitee is in the room  */
-            else {
-                response = {
-                    result: 'success',
-                    socketId: requested_user,
+                /** invitee isn't in the link */
+                if (
+                    typeof sockets == "undefined" ||
+                    sockets === null ||
+                    !sockets.has(requested_user)
+                ) {
+                    response = {
+                        result: "fail",
+                        message: "user invited is no longer in the room",
+                    };
+                    socket.emit("invite_response", response);
+                    serverLog("invite command failed", JSON.stringify(response));
+                    return;
+                } else {
+                    /** invitee is in the room  */
+                    response = {
+                        result: "success",
+                        socketId: requested_user,
+                    };
+                    socket.emit("invite_response", response);
+
+                    response = {
+                        result: "success",
+                        socketId: socket.id,
+                    };
+                    socket.to(requested_user).emit("invited", response);
+                    serverLog("invite command succeeded", JSON.stringify(response));
                 }
-                socket.emit('invite_response', response)
-
-                response = {
-                    result: 'success',
-                    socketId: socket.id,
-                }
-                socket.to(requested_user).emit('invited', response);
-                serverLog("invite command succeeded", JSON.stringify(response));
-            }
-        });
-
+            });
     });
 
     socket.on("uninvite", (request) => {
@@ -281,7 +295,11 @@ io.on("connection", (socket) => {
             serverLog("uninvite command failed", JSON.stringify(response));
             return;
         }
-        if (typeof username == "undefined" || username === null || username === "") {
+        if (
+            typeof username == "undefined" ||
+            username === null ||
+            username === ""
+        ) {
             response = {
                 result: "fail",
                 message: "the user that was uninvited does not have a name registered",
@@ -298,7 +316,11 @@ io.on("connection", (socket) => {
                 /** Sockets didn't join the room */
 
                 /** invitee isn't in the link */
-                if (typeof sockets == "undefined" || sockets === null || !sockets.has(requested_user)) {
+                if (
+                    typeof sockets == "undefined" ||
+                    sockets === null ||
+                    !sockets.has(requested_user)
+                ) {
                     response = {
                         result: "fail",
                         message: "user uninvited is no longer in the room",
@@ -323,7 +345,6 @@ io.on("connection", (socket) => {
                 }
             });
     });
-
 
     socket.on("game_start", (request) => {
         serverLog(
@@ -420,12 +441,13 @@ io.on("connection", (socket) => {
             });
     });
 
-
-
     socket.on("disconnect", () => {
         serverLog("a page disconnected from the server: " + socket.id);
 
-        if (typeof players[socket.id] != "undefined" && players[socket.id] != null) {
+        if (
+            typeof players[socket.id] != "undefined" &&
+            players[socket.id] != null
+        ) {
             let response = {
                 username: players[socket.id].username,
                 room: players[socket.id].room,
@@ -519,8 +541,117 @@ io.on("connection", (socket) => {
         io.of("/").to(room).emit("send_chat_message_response", response);
         serverLog("send_chat_message command succeded", JSON.stringify(response));
     });
-});
 
+    socket.on("play_token", (payload) => {
+        serverLog(
+            "server received a command",
+            "'play_token'",
+            JSON.stringify(payload)
+        );
+
+        /** Check that the data from the client is good */
+        if (typeof payload == "undefined" || payload === null) {
+            response = {};
+            response.result = "fail";
+            response.message = "client did not send a request";
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
+        let player = players[socket.id];
+
+        if (typeof player == "undefined" || player === null) {
+            response = {};
+            response.result = "fail";
+            response.message = "play_token came from an unregistered player";
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
+        let username = player.username;
+        if (typeof username == "undefined" || username === null) {
+            response = {};
+            response.result = "fail";
+            response.message =
+                "play_token command did not come from a registered username";
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
+        let gameId = player.room;
+        if (typeof gameId == "undefined" || gameId === null) {
+            response = {};
+            response.result = "fail";
+            response.message =
+                "there was no valid play associated with the play_token command";
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
+        let row = payload.row;
+        if (typeof row == "undefined" || row === null) {
+            response = {};
+            response.result = "fail";
+            response.message =
+                "there was no valid row associated with the play_token command";
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
+        let col = payload.col;
+        if (typeof col == "undefined" || col === null) {
+            response = {};
+            response.result = "fail";
+            response.message =
+                "there was no valid column associated with the play_token command";
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
+        let color = payload.color;
+        if (typeof color == "undefined" || color === null) {
+            response = {};
+            response.result = "fail";
+            response.message =
+                "there was no valid color associated with the play_token command";
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
+        let game = games[gameId];
+        if (typeof game == "undefined" || game === null) {
+            response = {};
+            response.result = "fail";
+            response.message =
+                "there was no valid game associated with the play_token command";
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+        /** Handle the command */
+        let response = {
+            result: "success",
+        };
+        /** tell everyone in the room the message */
+        socket.emit("play_token_response", response);
+
+        if (color === "white") {
+            game.board[row][col] = "w";
+            game.whoseTurn = "black";
+        } else {
+            game.board[row][col] = "b";
+            game.whoseTurn = "white";
+        }
+        send_game_update(socket, gameId, "played a token");
+    });
+});
 
 /*************************************/
 /** Code related to game state */
@@ -539,17 +670,17 @@ function create_new_game(gameId) {
     var d = new Date();
     newGame.lastMoveTime = d.getTime();
 
-    newGame.whoseTurn = 'white';
+    newGame.whoseTurn = "white";
 
     newGame.board = [
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', 'w', 'b', ' ', ' ', ' '],
-        [' ', ' ', ' ', 'b', 'w', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", "w", "b", " ", " ", " "],
+        [" ", " ", " ", "b", "w", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
     ];
 
     return newGame;
@@ -561,18 +692,74 @@ function send_game_update(socket, gameId, message) {
     /** Assign both sockets a color */
     /** send game update */
     /** check to see if game is over */
-    if (typeof games[gameId] == 'undefined' || games[gameId] === null) {
-        console.log("no game exists with game ID: " + gameId + ". Making a new game for " + socket.id);
+    if (typeof games[gameId] == "undefined" || games[gameId] === null) {
+        console.log(
+            "no game exists with game ID: " +
+            gameId +
+            ". Making a new game for " +
+            socket.id
+        );
         games[gameId] = create_new_game();
     }
 
-    let response = {
-        result: 'success',
-        gameId: gameId,
-        game: games[gameId],
-        message: message,
-    }
+    io.of("/")
+        .to(gameId)
+        .allSockets()
+        .then((sockets) => {
+            const iterator = sockets[Symbol.iterator]();
+            if (sockets.size >= 1) {
+                let first = iterator.next().value;
+                if (
+                    games[gameId].playerWhite.socket != first &&
+                    games[gameId].playerBlack.socket != first
+                ) {
+                    /** player does not have a color yet */
+                    if (games[gameId].playerWhite.socket === "") {
+                        console.log("white is assigned to: " + first);
+                        games[gameId].playerWhite.socket = first;
+                        games[gameId].playerWhite.username = players[first].username;
+                    } else if (games[gameId].playerBlack.socket === "") {
+                        console.log("black is assigned to: " + first);
+                        games[gameId].playerBlack.socket = first;
+                        games[gameId].playerBlack.username = players[first].username;
+                    } else {
+                        /** if not black or white then a third player and must be kicked out */
+                        console.log("kicking " + first + " out of game: " + gameId);
+                        io.in(first).socketsLeave([gameId]);
+                    }
+                }
+            }
 
-    io.of("/").to(gameId).emit('game_update', response);
+            if (sockets.size >= 2) {
+                let second = iterator.next().value;
+                if (
+                    games[gameId].playerWhite.socket != second &&
+                    games[gameId].playerBlack.socket != second
+                ) {
+                    /** player does not have a color yet */
+                    if (games[gameId].playerWhite.socket === "") {
+                        console.log("white is assigned to: " + second);
+                        games[gameId].playerWhite.socket = second;
+                        games[gameId].playerWhite.username = players[second].username;
+                    } else if (games[gameId].playerBlack.socket === "") {
+                        console.log("black is assigned to: " + second);
+                        games[gameId].playerBlack.socket = second;
+                        games[gameId].playerBlack.username = players[second].username;
+                    } else {
+                        /** if not black or white then a third player and must be kicked out */
+                        console.log("kicking " + second + " out of game: " + gameId);
+                        io.in(second).socketsLeave([gameId]);
+                    }
+                }
+                let response = {
+                    result: "success",
+                    gameId: gameId,
+                    game: games[gameId],
+                    message: message,
+                };
 
+                io.of("/").to(gameId).emit("game_update", response);
+            }
+        });
+    /** check if the game is over */
 }

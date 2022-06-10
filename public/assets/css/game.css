@@ -33,3 +33,7 @@ body {
     margin: 1px 2px 1px 1px;
     color: rgb(0, 0, 0);
 }
+
+td.hovered-over:hover {
+    background-image: url("/assets/images/hover.gif");
+}

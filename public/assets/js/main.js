@@ -168,7 +168,8 @@ socket.on("game_start_response", (response) => {
     $(".socket_" + response.socketId + " button").replaceWith(newNode);
 
     /** Jump to the game page */
-    window.location.href = 'game.html?username=' + username + '&gameId=' + response.gameId;
+    window.location.href =
+        "game.html?username=" + username + "&gameId=" + response.gameId;
 });
 
 socket.on("join_room_response", (response) => {
@@ -303,8 +304,6 @@ socket.on("send_chat_message_response", (response) => {
     newNode.fadeIn(500);
 });
 
-
-
 let oldBoard = [
     ["?", "?", "?", "?", "?", "?", "?", "?"],
     ["?", "?", "?", "?", "?", "?", "?", "?"],
@@ -315,6 +314,9 @@ let oldBoard = [
     ["?", "?", "?", "?", "?", "?", "?", "?"],
     ["?", "?", "?", "?", "?", "?", "?", "?"],
 ];
+
+let myColor = "";
+
 socket.on("game_update", (response) => {
     if (typeof response == "undefined" || response === null) {
         console.log("server did not send a response");
@@ -326,12 +328,25 @@ socket.on("game_update", (response) => {
     }
 
     let board = response.game.board;
-    if (typeof board == 'undefined' || board === null) {
-        console.log('Server did not send a valid board to display');
+    if (typeof board == "undefined" || board === null) {
+        console.log("Server did not send a valid board to display");
         return;
     }
 
     /** Update client color */
+    if (socket.id === response.game.playerWhite.socket) {
+        myColor = "white";
+    } else if (socket.id === response.game.playerBlack.socket) {
+        myColor = "black";
+    } else {
+        window.location.href = "lobby.html?username=" + username;
+        console.log(
+            "player: " + response.game.playerBlack.socket + "was not assigned a color"
+        );
+        return;
+    }
+
+    $("#my-color").html('<h3 id="my-color">I am ' + myColor + "</h3>");
 
     /** animate changes to the board */
     for (let row = 0; row < 8; row++) {
@@ -340,39 +355,39 @@ socket.on("game_update", (response) => {
             if (oldBoard[row][col] !== board[row][col]) {
                 let graphic = "";
                 let altTag = "";
-                if (oldBoard[row][col] !== '?' && board[row][col] === ' ') {
+                if (oldBoard[row][col] !== "?" && board[row][col] === " ") {
                     /** need empty gif */
                     graphic = "empty.gif";
                     altTag = "empty space";
-                } else if (oldBoard[row][col] !== '?' && board[row][col] === "w") {
+                } else if (oldBoard[row][col] !== "?" && board[row][col] === "w") {
                     /** need empty gif */
                     graphic = "e-w.gif";
                     altTag = "white token";
-                } else if (oldBoard[row][col] !== '?' && board[row][col] === "b") {
+                } else if (oldBoard[row][col] !== "?" && board[row][col] === "b") {
                     /** need empty gif */
                     graphic = "e-b.gif";
                     altTag = "black token";
-                } else if (oldBoard[row][col] !== ' ' && board[row][col] === "w") {
+                } else if (oldBoard[row][col] !== " " && board[row][col] === "w") {
                     /** need empty gif */
                     graphic = "e-w.gif";
                     altTag = "white token";
-                } else if (oldBoard[row][col] !== ' ' && board[row][col] === "b") {
+                } else if (oldBoard[row][col] !== " " && board[row][col] === "b") {
                     /** need empty gif */
                     graphic = "e-b.gif";
                     altTag = "black token";
-                } else if (oldBoard[row][col] !== 'w' && board[row][col] === " ") {
+                } else if (oldBoard[row][col] !== "w" && board[row][col] === " ") {
                     /** need empty gif */
                     graphic = "w-e.gif";
                     altTag = "empty space";
-                } else if (oldBoard[row][col] !== 'b' && board[row][col] === " ") {
+                } else if (oldBoard[row][col] !== "b" && board[row][col] === " ") {
                     /** need empty gif */
                     graphic = "b-e.gif";
                     altTag = "empty space";
-                } else if (oldBoard[row][col] !== 'w' && board[row][col] === "b") {
+                } else if (oldBoard[row][col] !== "w" && board[row][col] === "b") {
                     /** need empty gif */
                     graphic = "w-b.gif";
                     altTag = "black token";
-                } else if (oldBoard[row][col] !== 'b' && board[row][col] === "w") {
+                } else if (oldBoard[row][col] !== "b" && board[row][col] === "w") {
                     /** need empty gif */
                     graphic = "b-w.gif";
                     altTag = "white token";
@@ -383,13 +398,52 @@ socket.on("game_update", (response) => {
                 }
 
                 const t = Date.now();
-                $('#' + row + '_' + col).html('<img class="img-fluid" src="assets/images/' + graphic + '?time=' + t + '" alt="' + altTag + '"/>');
+                $("#" + row + "_" + col).html(
+                    '<img class="img-fluid" src="assets/images/' +
+                    graphic +
+                    "?time=" +
+                    t +
+                    '" alt="' +
+                    altTag +
+                    '"/>'
+                );
+                $("#" + row + "_" + col).off("click");
+                if (board[row][col] === " ") {
+                    $("#" + row + "_" + col).addClass("hovered-over");
+                    $("#" + row + "_" + col).click(
+                        ((r, c) => {
+                            return () => {
+                                let response = {
+                                    row: r,
+                                    col: c,
+                                    color: myColor,
+                                };
+                                console.log(
+                                    "**** client log message, sending 'play_token' command: " +
+                                    JSON.stringify(response)
+                                );
+                                socket.emit("play_token", response);
+                            };
+                        })(row, col)
+                    );
+                } else {
+                    $("#" + row + "_" + col).removeClass("hovered-over");
+                }
             }
         }
     }
-
     oldBoard = board;
+});
 
+socket.on("play_token_response", (response) => {
+    if (typeof response == "undefined" || response === null) {
+        console.log("server did not send a response");
+        return;
+    }
+    if (response === "fail") {
+        console.log(response.message);
+        return;
+    }
 });
 
 /** Request to join the chatroom */
