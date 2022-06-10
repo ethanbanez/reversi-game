@@ -348,11 +348,19 @@ socket.on("game_update", (response) => {
 
     $("#my-color").html('<h3 id="my-color">I am ' + myColor + "</h3>");
 
+    let whiteSum = 0;
+    let blackSum = 0;
     /** animate changes to the board */
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
-            /** check to see if the server changed any space on the board */
+            if (board[row][col] === "w") {
+                whiteSum++;
+            } else if (board[row][col] === "b") {
+                blackSum++;
+            }
+
             if (oldBoard[row][col] !== board[row][col]) {
+                /** check to see if the server changed any space on the board */
                 let graphic = "";
                 let altTag = "";
                 if (oldBoard[row][col] !== "?" && board[row][col] === " ") {
@@ -432,6 +440,8 @@ socket.on("game_update", (response) => {
             }
         }
     }
+    $("#white-sum").html(whiteSum);
+    $("#black-sum").html(blackSum);
     oldBoard = board;
 });
 
@@ -446,6 +456,34 @@ socket.on("play_token_response", (response) => {
     }
 });
 
+socket.on("game_over", (response) => {
+    if (typeof response == "undefined" || response === null) {
+        console.log("server did not send a response");
+        return;
+    }
+    if (response === "fail") {
+        console.log(response.message);
+        return;
+    }
+
+    /** announce with a button to the lobby */
+    let nodeA = $("<div id='game_over'></div>");
+    let nodeB = $("<h1>Game Over</h1>");
+    let nodeC = $("<h2>" + response.whoWon + " won!</h2>");
+    let nodeD = $(
+        "<a href='lobby.html?username=" +
+        username +
+        "' class='btn btn-lg btn-success' role='button'>Return to lobby</a>"
+    );
+    nodeA.append(nodeB);
+    nodeA.append(nodeC);
+    nodeA.append(nodeD);
+    nodeA.hide();
+
+    $("#game-over").replaceWith(nodeA);
+    nodeA.fadeIn(1000);
+});
+
 /** Request to join the chatroom */
 $(() => {
     let request = {};
@@ -458,6 +496,13 @@ $(() => {
     socket.emit("join_room", request);
 
     $("#lobby-title").html(username + "'s Lobby");
+    $("#quit").html(
+        $(
+            "<a href='lobby.html?username=" +
+            username +
+            "' class='btn btn-danger' role='button'>Quit</a>"
+        )
+    );
 
     $("#chat-message").keypress(function(e) {
         let key = e.which;

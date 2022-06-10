@@ -762,4 +762,31 @@ function send_game_update(socket, gameId, message) {
             }
         });
     /** check if the game is over */
+    let count = 0;
+    for (let row = 0; row < 8; row++) {
+        for (let column = 0; column < 8; column++) {
+            if (games[gameId].board[row][column] != " ") {
+                count++;
+            }
+        }
+    }
+    if (count === 64) {
+        let response = {
+            result: "success",
+            gameId: gameId,
+            game: games[gameId],
+            whoWon: "everyone",
+        };
+        io.in(gameId).emit("game_over", response);
+
+        /* Delete old games after one hour */
+        setTimeout(
+            ((id) => {
+                return () => {
+                    delete games[id];
+                };
+            })(gameId),
+            60 * 60 * 1000
+        );
+    }
 }
