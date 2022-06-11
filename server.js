@@ -735,6 +735,10 @@ io.on("connection", (socket) => {
             game.whoseTurn = "white";
             game.legalMoves = calculateLegalMoves("w", game.board);
         }
+
+        let d = new Date();
+        game.lastMoveTime = d.getTime();
+
         send_game_update(socket, gameId, "played a token");
     });
 });

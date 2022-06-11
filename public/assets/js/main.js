@@ -255,9 +255,7 @@ socket.on("player_disconnected", (response) => {
     let newString =
         '<p class="left_room_response">' +
         response.username +
-        " left the " +
-        response.room +
-        ". (There are " +
+        " left the chatroom. (There are " +
         response.count +
         " users in this room)</p>";
     let newNode = $(newString);
@@ -305,17 +303,18 @@ socket.on("send_chat_message_response", (response) => {
 });
 
 let oldBoard = [
-    ["?", "?", "?", "?", "?", "?", "?", "?"],
-    ["?", "?", "?", "?", "?", "?", "?", "?"],
-    ["?", "?", "?", "?", "?", "?", "?", "?"],
-    ["?", "?", "?", "?", "?", "?", "?", "?"],
-    ["?", "?", "?", "?", "?", "?", "?", "?"],
-    ["?", "?", "?", "?", "?", "?", "?", "?"],
-    ["?", "?", "?", "?", "?", "?", "?", "?"],
-    ["?", "?", "?", "?", "?", "?", "?", "?"],
+    [" ", " ", " ", " ", " ", " ", " ", " "],
+    [" ", " ", " ", " ", " ", " ", " ", " "],
+    [" ", " ", " ", " ", " ", " ", " ", " "],
+    [" ", " ", " ", " ", " ", " ", " ", " "],
+    [" ", " ", " ", " ", " ", " ", " ", " "],
+    [" ", " ", " ", " ", " ", " ", " ", " "],
+    [" ", " ", " ", " ", " ", " ", " ", " "],
+    [" ", " ", " ", " ", " ", " ", " ", " "],
 ];
 
 let myColor = "";
+let intervalTimer;
 
 socket.on("game_update", (response) => {
     if (typeof response == "undefined" || response === null) {
@@ -491,6 +490,35 @@ socket.on("game_update", (response) => {
             }
         }
     }
+
+    clearInterval(intervalTimer);
+    intervalTimer = setInterval(
+        ((lastTime) => {
+            return () => {
+                let d = new Date();
+                let elapsedM = d.getTime() - lastTime;
+                let minutes = Math.floor(elapsedM / 1000 / 60);
+                let seconds = Math.floor(elapsedM % (60 * 1000)) / 1000;
+                let total = minutes * 60 + seconds;
+                if (total > 100) {
+                    total = 100;
+                }
+                $("#elapsed")
+                    .css("width", total + "%")
+                    .attr("aria-valuenow", total);
+                let timeString = "" + seconds;
+                timeString = timeString.padStart(2, "0");
+                timeString = minutes + ":" + timeString;
+                if (total < 100) {
+                    $("#elapsed").html(timeString);
+                } else {
+                    $("#elapsed").html("Time's up!");
+                }
+            };
+        })(response.game.lastMoveTime),
+        1000
+    );
+
     $("#white-sum").html(whiteSum);
     $("#black-sum").html(blackSum);
     oldBoard = board;
