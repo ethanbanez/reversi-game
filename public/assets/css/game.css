@@ -5,6 +5,7 @@ table#game-board {
 }
 
 table#game-board td {
+    background-color: darkkhaki;
     border: 1px solid black;
     margin: 0px;
     padding: 0px;

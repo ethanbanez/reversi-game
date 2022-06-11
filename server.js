@@ -36,6 +36,7 @@ let players = [];
 /** Set up the web socket server */
 
 const { Server } = require("socket.io");
+const { setServers } = require("dns");
 const io = new Server(app);
 
 io.on("connection", (socket) => {
@@ -126,9 +127,13 @@ io.on("connection", (socket) => {
                 ) {
                     response = {};
                     response.result = "fail";
-                    response.message = "server internal error joining the chat room";
+                    response.message =
+                        "server internal error joining the chat room";
                     socket.emit("join_room_response", response);
-                    serverLog("join_room command failed", JSON.stringify(response));
+                    serverLog(
+                        "join_room command failed",
+                        JSON.stringify(response)
+                    );
                     return;
                 } else {
                     players[socket.id] = {
@@ -148,8 +153,13 @@ io.on("connection", (socket) => {
                             count: sockets.length,
                         };
                         /** tell everyone that a new user has joined the chat room */
-                        io.of("/").to(room).emit("join_room_response", response);
-                        serverLog("join_room command succeeded", JSON.stringify(response));
+                        io.of("/")
+                            .to(room)
+                            .emit("join_room_response", response);
+                        serverLog(
+                            "join_room command succeeded",
+                            JSON.stringify(response)
+                        );
                         if (room !== "Lobby") {
                             send_game_update(socket, room, "initial update");
                         }
@@ -159,7 +169,11 @@ io.on("connection", (socket) => {
     });
 
     socket.on("invite", (request) => {
-        serverLog("server received a command", "'invite'", JSON.stringify(request));
+        serverLog(
+            "server received a command",
+            "'invite'",
+            JSON.stringify(request)
+        );
 
         /** Check that the data from the client is good */
         if (typeof request == "undefined" || request === null) {
@@ -230,7 +244,10 @@ io.on("connection", (socket) => {
                         message: "user invited is no longer in the room",
                     };
                     socket.emit("invite_response", response);
-                    serverLog("invite command failed", JSON.stringify(response));
+                    serverLog(
+                        "invite command failed",
+                        JSON.stringify(response)
+                    );
                     return;
                 } else {
                     /** invitee is in the room  */
@@ -245,7 +262,10 @@ io.on("connection", (socket) => {
                         socketId: socket.id,
                     };
                     socket.to(requested_user).emit("invited", response);
-                    serverLog("invite command succeeded", JSON.stringify(response));
+                    serverLog(
+                        "invite command succeeded",
+                        JSON.stringify(response)
+                    );
                 }
             });
     });
@@ -326,7 +346,10 @@ io.on("connection", (socket) => {
                         message: "user uninvited is no longer in the room",
                     };
                     socket.emit("uninvited", response);
-                    serverLog("uninvite command failed", JSON.stringify(response));
+                    serverLog(
+                        "uninvite command failed",
+                        JSON.stringify(response)
+                    );
                     return;
                 } else {
                     /** invitee is in the room  */
@@ -341,7 +364,10 @@ io.on("connection", (socket) => {
                         socketId: socket.id,
                     };
                     socket.to(requested_user).emit("uninvited", response);
-                    serverLog("uninvite command succeeded", JSON.stringify(response));
+                    serverLog(
+                        "uninvite command succeeded",
+                        JSON.stringify(response)
+                    );
                 }
             });
     });
@@ -422,12 +448,17 @@ io.on("connection", (socket) => {
                         message: "user engaged is no longer in the room",
                     };
                     socket.emit("game_start_response", response);
-                    serverLog("game_start command failed", JSON.stringify(response));
+                    serverLog(
+                        "game_start command failed",
+                        JSON.stringify(response)
+                    );
                     return;
                 } else {
                     /** engaged player is in the room  */
 
-                    let gameId = Math.floor(1 + Math.random() * 0x100000).toString(16);
+                    let gameId = Math.floor(
+                        1 + Math.random() * 0x100000
+                    ).toString(16);
 
                     response = {
                         result: "success",
@@ -435,8 +466,13 @@ io.on("connection", (socket) => {
                         gameId: gameId,
                     };
                     socket.emit("game_start_response", response);
-                    socket.to(requested_user).emit("game_start_response", response);
-                    serverLog("game_start command succeeded", JSON.stringify(response));
+                    socket
+                        .to(requested_user)
+                        .emit("game_start_response", response);
+                    serverLog(
+                        "game_start command succeeded",
+                        JSON.stringify(response)
+                    );
                 }
             });
     });
@@ -459,7 +495,10 @@ io.on("connection", (socket) => {
 
             /** Tell everyone who left the room */
             io.of("/").to(room).emit("player_disconnected", response);
-            serverLog("player_disconnected succeeded", JSON.stringify(response));
+            serverLog(
+                "player_disconnected succeeded",
+                JSON.stringify(response)
+            );
         }
     });
 
@@ -500,7 +539,10 @@ io.on("connection", (socket) => {
             response.result = "fail";
             response.message = "client did not send a request";
             socket.emit("send_chat_message_response", response);
-            serverLog("send_chat_message command failed", JSON.stringify(response));
+            serverLog(
+                "send_chat_message command failed",
+                JSON.stringify(response)
+            );
             return;
         }
         let room = request.room;
@@ -510,8 +552,11 @@ io.on("connection", (socket) => {
             response = {};
             response.result = "fail";
             response.message = "client did not send a valid room to message";
-            socket.emit("send_chat_message_response", response);
-            serverLog("send_chat_message command failed", JSON.stringify(response));
+            socket.emit("send_chat_message_response", respsonse);
+            serverLog(
+                "send_chat_message command failed",
+                JSON.stringify(response)
+            );
             return;
         }
         if (typeof username == "undefined" || username === null) {
@@ -520,7 +565,10 @@ io.on("connection", (socket) => {
             response.message =
                 "client did not send a valid username as a message source";
             socket.emit("send_chat_message_response", response);
-            serverLog("send_chat_message command failed", JSON.stringify(response));
+            serverLog(
+                "send_chat_message command failed",
+                JSON.stringify(response)
+            );
             return;
         }
         if (typeof message == "undefined" || message === null) {
@@ -528,7 +576,10 @@ io.on("connection", (socket) => {
             response.result = "fail";
             response.message = "client did not send a valid message";
             socket.emit("send_chat_message_response", response);
-            serverLog("send_chat_message command failed", JSON.stringify(response));
+            serverLog(
+                "send_chat_message command failed",
+                JSON.stringify(response)
+            );
             return;
         }
         /** Handle the command */
@@ -539,7 +590,10 @@ io.on("connection", (socket) => {
         response.message = message;
         /** tell everyone in the room the message */
         io.of("/").to(room).emit("send_chat_message_response", response);
-        serverLog("send_chat_message command succeded", JSON.stringify(response));
+        serverLog(
+            "send_chat_message command succeded",
+            JSON.stringify(response)
+        );
     });
 
     socket.on("play_token", (payload) => {
@@ -560,7 +614,6 @@ io.on("connection", (socket) => {
         }
 
         let player = players[socket.id];
-
         if (typeof player == "undefined" || player === null) {
             response = {};
             response.result = "fail";
@@ -635,6 +688,33 @@ io.on("connection", (socket) => {
             serverLog("play_token command failed", JSON.stringify(response));
             return;
         }
+
+        /** make sure the current attempt is made by the correct color */
+        if (color !== game.whoseTurn) {
+            let response = {
+                result: "fail",
+                message: "play_token played the wrong color. It's not their turn",
+            };
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
+        /** make sure the current play is coming from the expected player */
+        if (
+            (game.whoseTurn === "white" &&
+                game.playerWhite.socket != socket.id) ||
+            (game.whoseTurn === "black" && game.playerBlack.socket != socket.id)
+        ) {
+            let response = {
+                result: "fail",
+                message: "play_token played the right color but by the wrong person",
+            };
+            socket.emit("play_token_response", response);
+            serverLog("play_token command failed", JSON.stringify(response));
+            return;
+        }
+
         /** Handle the command */
         let response = {
             result: "success",
@@ -644,10 +724,16 @@ io.on("connection", (socket) => {
 
         if (color === "white") {
             game.board[row][col] = "w";
+            flipTokens("w", row, col, game.board);
+
             game.whoseTurn = "black";
+            game.legalMoves = calculateLegalMoves("b", game.board);
         } else {
             game.board[row][col] = "b";
+            flipTokens("b", row, col, game.board);
+
             game.whoseTurn = "white";
+            game.legalMoves = calculateLegalMoves("w", game.board);
         }
         send_game_update(socket, gameId, "played a token");
     });
@@ -670,7 +756,7 @@ function create_new_game(gameId) {
     var d = new Date();
     newGame.lastMoveTime = d.getTime();
 
-    newGame.whoseTurn = "white";
+    newGame.whoseTurn = "black";
 
     newGame.board = [
         [" ", " ", " ", " ", " ", " ", " ", " "],
@@ -683,7 +769,137 @@ function create_new_game(gameId) {
         [" ", " ", " ", " ", " ", " ", " ", " "],
     ];
 
+    newGame.legalMoves = calculateLegalMoves("b", newGame.board);
+
     return newGame;
+}
+
+function checkLineMatch(color, dr, dc, r, c, board) {
+    if (board[r][c] === color) {
+        return true;
+    }
+
+    if (board[r][c] === " ") {
+        return false;
+    }
+
+    /** check to make sure we didn't walk off the board */
+    if (r + dr < 0 || r + dr > 7) {
+        return false;
+    }
+    if (c + dc < 0 || c + dc > 7) {
+        return false;
+    }
+
+    return checkLineMatch(color, dr, dc, r + dr, c + dc, board);
+}
+
+/** return true if r + dr supports  playing at r and if c + dc supports playing at c */
+function adjacentSupport(who, dr, dc, r, c, board) {
+    let other;
+    if (who === "b") {
+        other = "w";
+    } else if (who === "w") {
+        other = "b";
+    } else {
+        console.log("Houston we have a problem" + who);
+        return false;
+    }
+
+    /** check to make sure that the adjacent support is on the board */
+    if (r + dr < 0 || r + dr > 7) {
+        return false;
+    }
+    if (c + dc < 0 || c + dc > 7) {
+        return false;
+    }
+
+    /** check that the opposite color is present */
+    if (board[r + dr][c + dc] !== other) {
+        return false;
+    }
+
+    /** check to make sure that there is a space for a matching color to capture tokens */
+    if (r + dr + dr < 0 || r + dr + dr > 7) {
+        return false;
+    }
+    if (c + dc + dc < 0 || c + dc + dc > 7) {
+        return false;
+    }
+
+    return checkLineMatch(who, dr, dc, r + dr + dr, c + dc + dc, board);
+}
+
+function calculateLegalMoves(who, board) {
+    let legalMoves = [
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " ", " ", " ", " "],
+    ];
+
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            if (board[row][col] === " ") {
+                nw = adjacentSupport(who, -1, -1, row, col, board);
+                nn = adjacentSupport(who, -1, 0, row, col, board);
+                ne = adjacentSupport(who, -1, 1, row, col, board);
+
+                ww = adjacentSupport(who, 0, -1, row, col, board);
+                ee = adjacentSupport(who, 0, 1, row, col, board);
+
+                sw = adjacentSupport(who, 1, -1, row, col, board);
+                ss = adjacentSupport(who, 1, 0, row, col, board);
+                se = adjacentSupport(who, 1, 1, row, col, board);
+                if (nw || nn || ne || ww || ee || sw || ss || se) {
+                    legalMoves[row][col] = who;
+                }
+            }
+        }
+    }
+    return legalMoves;
+}
+
+function flipLine(who, dr, dc, r, c, board) {
+    if (r + dr < 0 || r + dr > 7) {
+        return false;
+    }
+    if (c + dc < 0 || c + dc > 7) {
+        return false;
+    }
+
+    /** check that the opposite color is present */
+    if (board[r + dr][c + dc] === " ") {
+        return false;
+    }
+
+    if (board[r + dr][c + dc] === who) {
+        return true;
+    } else {
+        if (flipLine(who, dr, dc, r + dr, c + dc, board)) {
+            board[r + dr][c + dc] = who;
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+function flipTokens(who, row, col, board) {
+    flipLine(who, -1, -1, row, col, board);
+    flipLine(who, -1, 0, row, col, board);
+    flipLine(who, -1, 1, row, col, board);
+
+    flipLine(who, 0, -1, row, col, board);
+    flipLine(who, 0, 1, row, col, board);
+
+    flipLine(who, 1, -1, row, col, board);
+    flipLine(who, 1, 0, row, col, board);
+    flipLine(who, 1, 1, row, col, board);
 }
 
 function send_game_update(socket, gameId, message) {
@@ -717,14 +933,18 @@ function send_game_update(socket, gameId, message) {
                     if (games[gameId].playerWhite.socket === "") {
                         console.log("white is assigned to: " + first);
                         games[gameId].playerWhite.socket = first;
-                        games[gameId].playerWhite.username = players[first].username;
+                        games[gameId].playerWhite.username =
+                            players[first].username;
                     } else if (games[gameId].playerBlack.socket === "") {
                         console.log("black is assigned to: " + first);
                         games[gameId].playerBlack.socket = first;
-                        games[gameId].playerBlack.username = players[first].username;
+                        games[gameId].playerBlack.username =
+                            players[first].username;
                     } else {
                         /** if not black or white then a third player and must be kicked out */
-                        console.log("kicking " + first + " out of game: " + gameId);
+                        console.log(
+                            "kicking " + first + " out of game: " + gameId
+                        );
                         io.in(first).socketsLeave([gameId]);
                     }
                 }
@@ -740,14 +960,18 @@ function send_game_update(socket, gameId, message) {
                     if (games[gameId].playerWhite.socket === "") {
                         console.log("white is assigned to: " + second);
                         games[gameId].playerWhite.socket = second;
-                        games[gameId].playerWhite.username = players[second].username;
+                        games[gameId].playerWhite.username =
+                            players[second].username;
                     } else if (games[gameId].playerBlack.socket === "") {
                         console.log("black is assigned to: " + second);
                         games[gameId].playerBlack.socket = second;
-                        games[gameId].playerBlack.username = players[second].username;
+                        games[gameId].playerBlack.username =
+                            players[second].username;
                     } else {
                         /** if not black or white then a third player and must be kicked out */
-                        console.log("kicking " + second + " out of game: " + gameId);
+                        console.log(
+                            "kicking " + second + " out of game: " + gameId
+                        );
                         io.in(second).socketsLeave([gameId]);
                     }
                 }
@@ -762,20 +986,38 @@ function send_game_update(socket, gameId, message) {
             }
         });
     /** check if the game is over */
-    let count = 0;
+    let legalMoves = 0;
+    let whiteSum = 0;
+    let blackSum = 0;
+
     for (let row = 0; row < 8; row++) {
         for (let column = 0; column < 8; column++) {
-            if (games[gameId].board[row][column] != " ") {
-                count++;
+            if (games[gameId].legalMoves[row][column] !== " ") {
+                legalMoves++;
+            }
+            if (games[gameId].board[row][column] === "w") {
+                whiteSum++;
+            }
+            if (games[gameId].board[row][column] === "b") {
+                blackSum++;
             }
         }
     }
-    if (count === 64) {
+    if (legalMoves === 0) {
+        let winner;
+        if (whiteSum > blackSum) {
+            winner = "white";
+        } else if (whiteSum < blackSum) {
+            winner = "black";
+        } else {
+            winner = "Tie Game";
+        }
+
         let response = {
             result: "success",
             gameId: gameId,
             game: games[gameId],
-            whoWon: "everyone",
+            whoWon: winner,
         };
         io.in(gameId).emit("game_over", response);
 

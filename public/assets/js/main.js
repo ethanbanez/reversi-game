@@ -341,15 +341,35 @@ socket.on("game_update", (response) => {
     } else {
         window.location.href = "lobby.html?username=" + username;
         console.log(
-            "player: " + response.game.playerBlack.socket + "was not assigned a color"
+            "player: " +
+            response.game.playerBlack.socket +
+            "was not assigned a color"
         );
         return;
     }
 
     $("#my-color").html('<h3 id="my-color">I am ' + myColor + "</h3>");
+    if (myColor === "white") {
+        $("#my-color").html("<h3 id='my-color'>I am white</h3>");
+    } else if (myColor === "black") {
+        $("#my-color").html("<h3 id='my-color'>I am black</h3>");
+    } else {
+        $("#my-color").html(
+            "<h3 id='my-color'>I don't know what color I am</h3>"
+        );
+    }
+
+    if (response.game.whoseTurn === "white") {
+        $("#my-color").append("<h4>It is white's turn</h4>");
+    } else if (response.game.whoseTurn === "black") {
+        $("#my-color").append("<h4>It is black's turn</h4>");
+    } else {
+        $("#my-color").append("<h4>Error: don't know whose turn it is</h4>");
+    }
 
     let whiteSum = 0;
     let blackSum = 0;
+
     /** animate changes to the board */
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
@@ -367,35 +387,59 @@ socket.on("game_update", (response) => {
                     /** need empty gif */
                     graphic = "empty.gif";
                     altTag = "empty space";
-                } else if (oldBoard[row][col] !== "?" && board[row][col] === "w") {
+                } else if (
+                    oldBoard[row][col] !== "?" &&
+                    board[row][col] === "w"
+                ) {
                     /** need empty gif */
                     graphic = "e-w.gif";
                     altTag = "white token";
-                } else if (oldBoard[row][col] !== "?" && board[row][col] === "b") {
+                } else if (
+                    oldBoard[row][col] !== "?" &&
+                    board[row][col] === "b"
+                ) {
                     /** need empty gif */
                     graphic = "e-b.gif";
                     altTag = "black token";
-                } else if (oldBoard[row][col] !== " " && board[row][col] === "w") {
+                } else if (
+                    oldBoard[row][col] !== " " &&
+                    board[row][col] === "w"
+                ) {
                     /** need empty gif */
                     graphic = "e-w.gif";
                     altTag = "white token";
-                } else if (oldBoard[row][col] !== " " && board[row][col] === "b") {
+                } else if (
+                    oldBoard[row][col] !== " " &&
+                    board[row][col] === "b"
+                ) {
                     /** need empty gif */
                     graphic = "e-b.gif";
                     altTag = "black token";
-                } else if (oldBoard[row][col] !== "w" && board[row][col] === " ") {
+                } else if (
+                    oldBoard[row][col] !== "w" &&
+                    board[row][col] === " "
+                ) {
                     /** need empty gif */
                     graphic = "w-e.gif";
                     altTag = "empty space";
-                } else if (oldBoard[row][col] !== "b" && board[row][col] === " ") {
+                } else if (
+                    oldBoard[row][col] !== "b" &&
+                    board[row][col] === " "
+                ) {
                     /** need empty gif */
                     graphic = "b-e.gif";
                     altTag = "empty space";
-                } else if (oldBoard[row][col] !== "w" && board[row][col] === "b") {
+                } else if (
+                    oldBoard[row][col] !== "w" &&
+                    board[row][col] === "b"
+                ) {
                     /** need empty gif */
                     graphic = "w-b.gif";
                     altTag = "black token";
-                } else if (oldBoard[row][col] !== "b" && board[row][col] === "w") {
+                } else if (
+                    oldBoard[row][col] !== "b" &&
+                    board[row][col] === "w"
+                ) {
                     /** need empty gif */
                     graphic = "b-w.gif";
                     altTag = "white token";
@@ -415,8 +459,17 @@ socket.on("game_update", (response) => {
                     altTag +
                     '"/>'
                 );
-                $("#" + row + "_" + col).off("click");
-                if (board[row][col] === " ") {
+            }
+
+            /** Set up interactivity */
+
+            $("#" + row + "_" + col).off("click");
+            $("#" + row + "_" + col).removeClass("hovered-over");
+            if (response.game.whoseTurn === myColor) {
+                if (
+                    response.game.legalMoves[row][col] ===
+                    myColor.substring(0, 1)
+                ) {
                     $("#" + row + "_" + col).addClass("hovered-over");
                     $("#" + row + "_" + col).click(
                         ((r, c) => {
@@ -434,8 +487,6 @@ socket.on("game_update", (response) => {
                             };
                         })(row, col)
                     );
-                } else {
-                    $("#" + row + "_" + col).removeClass("hovered-over");
                 }
             }
         }
@@ -452,6 +503,7 @@ socket.on("play_token_response", (response) => {
     }
     if (response === "fail") {
         console.log(response.message);
+        alert(response.message);
         return;
     }
 });
